@@ -1,6 +1,9 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 
+// VERCEL FIX: Forces this API route to be dynamic so the build doesn't crash
+export const dynamic = 'force-dynamic';
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
@@ -8,8 +11,8 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
     const lastMessage = messages[messages.length - 1].text.toLowerCase();
 
-    // 1. SMARTER IMAGE TRIGGER (Catches: draw, image, picture, photo, paint)
-    const imageKeywords = ["draw", "image", "picture", "photo", "paint", "generate"];
+    // 1. SMARTER IMAGE TRIGGER
+    const imageKeywords =["draw", "image", "picture", "photo", "paint", "generate"];
     const isImageRequest = imageKeywords.some(keyword => lastMessage.includes(keyword));
 
     if (isImageRequest) {
@@ -32,7 +35,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: imageUrl, type: 'image' });
     }
 
-    // 2. TEXT ROAST LOGIC (If no image keywords were found)
+    // 2. TEXT ROAST LOGIC
     const formattedMessages = messages.map((m: any) => ({
       role: m.role === 'chet' ? 'assistant' : 'user',
       content: m.text
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [
+      messages:[
         { 
           role: 'system', 
           content: "You are Chet GPT, the world's most chaotic roast bot. You have access to real-time data. If someone asks for a picture and the code triggers this text, mock them for being too poor to afford the image generator. Otherwise, be unhinged and sarcastic." 
