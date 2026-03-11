@@ -1,17 +1,20 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
 
-// VERCEL FIX: Forces this API route to be dynamic so the build doesn't crash
+// VERCEL FIX: Forces this API route to be dynamic
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// VERCEL FIX 2: Prevents "Missing Credentials" error during the build process
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key-for-vercel-build" 
+});
 
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
     const lastMessage = messages[messages.length - 1].text.toLowerCase();
 
-    // 1. SMARTER IMAGE TRIGGER
+    // 1. SMARTER IMAGE TRIGGER (Catches: draw, image, picture, photo, paint, generate)
     const imageKeywords =["draw", "image", "picture", "photo", "paint", "generate"];
     const isImageRequest = imageKeywords.some(keyword => lastMessage.includes(keyword));
 
@@ -23,6 +26,7 @@ export async function POST(req: Request) {
         size: "1024x1024",
       });
 
+      // SAFE ACCESS
       const imageUrl = imageResponse?.data?.[0]?.url;
 
       if (!imageUrl) {
