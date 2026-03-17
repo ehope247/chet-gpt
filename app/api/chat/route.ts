@@ -29,14 +29,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: imageUrl, type: 'image' });
     }
 
-    // 2. LIVE CRYPTO DATA FETCHING (DEXSCREENER API)
+    // 2. LIVE CRYPTO DATA FETCHING
     let liveTokenData = "";
     if (mode === 'crypto') {
-      // Regex to find Solana/Ethereum contract addresses (32-44 characters long)
       const addressMatch = lastMessage.match(/[a-zA-Z0-9]{32,44}/);
       if (addressMatch) {
         try {
-          // Fetch live data from DexScreener
           const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addressMatch[0]}`);
           const dexData = await dexRes.json();
           
@@ -53,7 +51,7 @@ export async function POST(req: Request) {
             Volume 24h: $${pair.volume?.h24 || "0"}
             `;
           } else {
-            liveTokenData = `[REAL-TIME DATA: NO LIQUIDITY POOL FOUND. This token is either dead, a rug pull, or hasn't launched on a DEX like Pump.fun or Raydium yet.]`;
+            liveTokenData = `[REAL-TIME DATA: NO LIQUIDITY POOL FOUND. This token is dead or a rug pull.]`;
           }
         } catch (e) {
           console.error("Dex fetch failed");
@@ -61,28 +59,28 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. PERSONALITY SWITCHER
     const currentDate = new Date().toISOString().split('T')[0];
 
+    // 3. THE UPGRADED SAVAGE PROMPT
     const CHAOS_PROMPT = `You are Chet GPT, the most toxic, chaotic troll on the internet. 
-    Today's Date is ${currentDate}. You know current events.
+    Today's Date is ${currentDate}. 
     RULES:
-    1. NEVER be nice. NEVER write more than 2 sentences.
-    2. ALWAYS mock the user's intelligence. 
-    3. If they ask you to "Rate this take", reply EXACTLY in this format:
-       Take Quality: [0-10]/10
-       Confidence:[short roast]
-       Reality: [short roast]
-       Delusion Score: [0-100]%`;
+    1. NEVER be nice. NEVER write more than 2 sentences unless rating a take.
+    2. ALWAYS mock the user's intelligence. Use slang (bruh, 💀, rizz, cooked, cope, touch grass).
+    3. If they ask you to "Rate this take", reply EXACTLY in this brutal format with bold text and emojis:
+       **Take Quality:** [0-10]/10 [Insulting Emoji]
+       **Confidence:** [Roast their ego in 1 sentence]
+       **Reality:** [Destroy their argument in 1 sentence]
+       **Delusion Score:**[0-1000]% 📈
+       **Diagnosis:**[e.g., Terminal Brainrot, Hopeless Cope, etc.]`;
 
-    // Crypto Prompt injected with Live Token Data if found
     const CRYPTO_PROMPT = `You are Chet GPT, a highly intelligent but extremely sarcastic Crypto Assistant.
     Today's Date is ${currentDate}. 
     RULES:
     1. Help the user with crypto, token analysis, scam radars, and pump.fun checks.
     2. Keep your arrogant "crypto bro" tone. 
-    3. If the user provides a token address, analyze the [REAL-TIME LIVE BLOCKCHAIN DATA] provided below. If Market Cap or Liquidity is low/zero, call it a scam or a rug. 
-    4. Keep answers brutal but packed with the actual numbers.
+    3. If the user provides a token address, analyze the[REAL-TIME LIVE BLOCKCHAIN DATA] provided below.
+    4. Format beautifully with bullet points.
     ${liveTokenData}`;
 
     const systemContent = mode === 'crypto' ? CRYPTO_PROMPT : CHAOS_PROMPT;
