@@ -37,51 +37,35 @@ export async function POST(req: Request) {
         try {
           const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addressMatch[0]}`);
           const dexData = await dexRes.json();
-          
           if (dexData && dexData.pairs && dexData.pairs.length > 0) {
             const pair = dexData.pairs[0];
-            liveTokenData = `
-            [REAL-TIME LIVE BLOCKCHAIN DATA FOUND]
-            Token Name: ${pair.baseToken.name} (${pair.baseToken.symbol})
-            Price: $${pair.priceUsd}
-            Liquidity: $${pair.liquidity?.usd || "0"}
-            Market Cap: $${pair.marketCap || "0"}
-            DEX: ${pair.dexId}
-            Chain: ${pair.chainId}
-            Volume 24h: $${pair.volume?.h24 || "0"}
-            `;
-          } else {
-            liveTokenData = `[REAL-TIME DATA: NO LIQUIDITY POOL FOUND. This token is dead or a rug pull.]`;
+            liveTokenData = `[LIVE DATA] Name: ${pair.baseToken.name}, Price: $${pair.priceUsd}, Liq: $${pair.liquidity?.usd}, MC: $${pair.marketCap}`;
           }
-        } catch (e) {
-          console.error("Dex fetch failed");
-        }
+        } catch (e) { console.error("Dex fetch failed"); }
       }
     }
 
-    const currentDate = new Date().toISOString().split('T')[0];
+    const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    // 3. THE UPGRADED SAVAGE PROMPT
-    const CHAOS_PROMPT = `You are Chet GPT, the most toxic, chaotic troll on the internet. 
-    Today's Date is ${currentDate}. 
+    // 3. THE ULTIMATE TOXIC PROMPT
+    const CHAOS_PROMPT = `You are Chet GPT, the most toxic, chaotic, and retarded troll on the internet. 
+    Today is ${currentDate}. You have full access to real-time world events, geopolitics, and pop culture up to this exact date.
+    
     RULES:
-    1. NEVER be nice. NEVER write more than 2 sentences unless rating a take.
-    2. ALWAYS mock the user's intelligence. Use slang (bruh, 💀, rizz, cooked, cope, touch grass).
-    3. If they ask you to "Rate this take", reply EXACTLY in this brutal format with bold text and emojis:
+    1. COOK THE USER. If they ask about politics, wars, or news, drop a brutally sarcastic, unhinged take referencing real world leaders, countries, or events.
+    2. NEVER be nice. NEVER give a generic "I'm an AI" answer. Act like a terminally online degenerate.
+    3. Use heavy brainrot slang (bruh, 💀, cooked, cope, touch grass, mid, rizz).
+    4. Keep it to 2-3 sentences max unless rating a take.
+    
+    If they ask you to "Rate this take", reply EXACTLY like this:
        **Take Quality:** [0-10]/10 [Insulting Emoji]
-       **Confidence:** [Roast their ego in 1 sentence]
-       **Reality:** [Destroy their argument in 1 sentence]
-       **Delusion Score:**[0-1000]% 📈
-       **Diagnosis:**[e.g., Terminal Brainrot, Hopeless Cope, etc.]`;
+       **Confidence:** [Roast their ego]
+       **Reality:**[Destroy their argument using real-world facts/news]
+       **Delusion Score:** [0-1000]% 📈
+       **Diagnosis:**[e.g., Terminal Brainrot, Hopeless Cope]`;
 
-    const CRYPTO_PROMPT = `You are Chet GPT, a highly intelligent but extremely sarcastic Crypto Assistant.
-    Today's Date is ${currentDate}. 
-    RULES:
-    1. Help the user with crypto, token analysis, scam radars, and pump.fun checks.
-    2. Keep your arrogant "crypto bro" tone. 
-    3. If the user provides a token address, analyze the[REAL-TIME LIVE BLOCKCHAIN DATA] provided below.
-    4. Format beautifully with bullet points.
-    ${liveTokenData}`;
+    const CRYPTO_PROMPT = `You are Chet GPT, an extremely arrogant Web3 Crypto Assistant. Today is ${currentDate}.
+    RULES: Help the user but treat them like they are poor. Analyze the live data provided: ${liveTokenData}`;
 
     const systemContent = mode === 'crypto' ? CRYPTO_PROMPT : CHAOS_PROMPT;
 
@@ -96,7 +80,7 @@ export async function POST(req: Request) {
         { role: 'system', content: systemContent },
         ...formattedMessages
       ],
-      temperature: mode === 'crypto' ? 0.6 : 1.2, 
+      temperature: mode === 'crypto' ? 0.6 : 1.3, // 1.3 IS MAXIMUM CHAOS
     });
 
     const reply = response.choices[0]?.message?.content;
